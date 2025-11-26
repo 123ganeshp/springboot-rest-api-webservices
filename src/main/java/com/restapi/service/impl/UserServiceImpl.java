@@ -1,46 +1,93 @@
 package com.restapi.service.impl;
 
+import com.restapi.dto.UserDto;
 import com.restapi.entity.User;
+import com.restapi.mapper.UserMapper;
 import com.restapi.repository.UserRepository;
 import com.restapi.service.UserService;
 import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
     private UserRepository userRepository;
 
+    private ModelMapper modelMapper;
+
+
+//    @Override
+//    public UserDto createUser(UserDto userDto) {
+//        //convert userDto into User JPA Entity
+//        User user = new User(
+//                userDto.getId(),
+//                userDto.getFirstName(),
+//                userDto.getLastName(),
+//                userDto.getEmail()
+//        );
+//        User savedUser = userRepository.save(user);
+//
+//        //convert User JPA entity to UserDto
+//
+//        UserDto savedUserDto = new UserDto(
+//                savedUser.getId(),
+//                savedUser.getFirstName(),
+//                savedUser.getLastName(),
+//                savedUser.getEmail()
+//        );
+//
+//        return savedUserDto;
+//
+//    }
+
     @Override
-    public User createUser(User user) {
-        return userRepository.save(user);
+    public UserDto createUser(UserDto userDto) {
+        //Convert UserDto into User JPA Entity
+//        User user = UserMapper.mapToUser(userDto);
+        User user = modelMapper.map(userDto, User.class);
+
+        User savedUser = userRepository.save(user);
+
+        //Convert User JPA entity to UserDto
+//        UserDto savedUserDto = UserMapper.mapToUserDto(savedUser);
+        UserDto savedUserDto = modelMapper.map(savedUser, UserDto.class);
+        return savedUserDto;
     }
 
     @Override
-    public User getUserById(Long userId) {
+    public UserDto getUserById(Long userId) {
         Optional<User> optionalUser = userRepository.findById(userId);
-        return optionalUser.get();
+        User user = optionalUser.get();
+//        return UserMapper.mapToUserDto(user);
+        return modelMapper.map(user, UserDto.class);
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+//        return users.stream().map(UserMapper::mapToUserDto)
+//                .collect(Collectors.toList());
+
+        return users.stream().map((user -> modelMapper.map(user, UserDto.class)))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public User updateUser(User user) {
+    public UserDto updateUser(UserDto user) {
         User existingUser = userRepository.findById(user.getId()).get();
         existingUser.setFirstName(user.getFirstName());
         existingUser.setLastName(user.getLastName());
         existingUser.setEmail(user.getEmail());
         User updatedUser = userRepository.save(existingUser);
-        return updatedUser;
+//        return UserMapper.mapToUserDto(updatedUser);
+        return modelMapper.map(user, UserDto.class);
     }
 
     @Override
