@@ -2,13 +2,17 @@ package com.restapi.controller;
 
 import com.restapi.dto.UserDto;
 import com.restapi.entity.User;
+import com.restapi.exception.ErrorDetails;
+import com.restapi.exception.ResourceNotFoundException;
 import com.restapi.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.WebRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -46,7 +50,7 @@ public class UserController {
     //http://localhost:8080/api/users/1
     @PutMapping("{id}")
     public ResponseEntity<UserDto> updateUser(@PathVariable("id") Long userId,
-                                           @RequestBody UserDto user) {
+                                              @RequestBody UserDto user) {
         user.setId(userId);
         UserDto updatedUser = userService.updateUser(user);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
@@ -59,5 +63,18 @@ public class UserController {
         userService.deleteUser(userId);
         return new ResponseEntity<>("User Successfully Deleted", HttpStatus.OK);
     }
+//
+//    @ExceptionHandler(ResourceNotFoundException.class)
+//    public ResponseEntity<ErrorDetails> handleResourceNotFoundException(ResourceNotFoundException exception
+//            , WebRequest webRequest) {
+//        ErrorDetails errorDetails = new ErrorDetails(
+//                LocalDateTime.now(),
+//                exception.getMessage(),
+//                webRequest.getDescription(false),
+//                "User Not Found"
+//        );
+//
+//        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+//    }
 
 }

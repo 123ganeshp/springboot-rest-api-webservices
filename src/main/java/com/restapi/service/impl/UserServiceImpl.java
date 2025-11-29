@@ -2,6 +2,8 @@ package com.restapi.service.impl;
 
 import com.restapi.dto.UserDto;
 import com.restapi.entity.User;
+import com.restapi.exception.EmailAlreadyExistsException;
+import com.restapi.exception.ResourceNotFoundException;
 import com.restapi.mapper.UserMapper;
 import com.restapi.repository.UserRepository;
 import com.restapi.service.UserService;
@@ -22,51 +24,27 @@ public class UserServiceImpl implements UserService {
 
     private ModelMapper modelMapper;
 
-
-//    @Override
-//    public UserDto createUser(UserDto userDto) {
-//        //convert userDto into User JPA Entity
-//        User user = new User(
-//                userDto.getId(),
-//                userDto.getFirstName(),
-//                userDto.getLastName(),
-//                userDto.getEmail()
-//        );
-//        User savedUser = userRepository.save(user);
-//
-//        //convert User JPA entity to UserDto
-//
-//        UserDto savedUserDto = new UserDto(
-//                savedUser.getId(),
-//                savedUser.getFirstName(),
-//                savedUser.getLastName(),
-//                savedUser.getEmail()
-//        );
-//
-//        return savedUserDto;
-//
-//    }
-
     @Override
     public UserDto createUser(UserDto userDto) {
-        //Convert UserDto into User JPA Entity
-//        User user = UserMapper.mapToUser(userDto);
-        User user = modelMapper.map(userDto, User.class);
 
+        Optional<User> optionalUser = userRepository.findByEmail(userDto.getEmail());
+
+        if(optionalUser.isPresent()){
+            throw new EmailAlreadyExistsException("Email Already Exists for User");
+        }
+        User user = UserMapper.mapToUser(userDto);
         User savedUser = userRepository.save(user);
 
-        //Convert User JPA entity to UserDto
-//        UserDto savedUserDto = UserMapper.mapToUserDto(savedUser);
-        UserDto savedUserDto = modelMapper.map(savedUser, UserDto.class);
+        UserDto savedUserDto = UserMapper.mapToUserDto(savedUser);
         return savedUserDto;
     }
 
     @Override
     public UserDto getUserById(Long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        User user = optionalUser.get();
-//        return UserMapper.mapToUserDto(user);
-        return modelMapper.map(user, UserDto.class);
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResourceNotFoundException("User", "id", userId)
+        );
+        return UserMapper.mapToUserDto(user);
     }
 
     @Override
@@ -81,17 +59,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(UserDto user) {
-        User existingUser = userRepository.findById(user.getId()).get();
+        User existingUser = userRepository.findById(user.getId()).orElseThrow(
+                () -> new ResourceNotFoundException("User","id", user.getId())
+        );
         existingUser.setFirstName(user.getFirstName());
         existingUser.setLastName(user.getLastName());
         existingUser.setEmail(user.getEmail());
         User updatedUser = userRepository.save(existingUser);
-//        return UserMapper.mapToUserDto(updatedUser);
-        return modelMapper.map(user, UserDto.class);
+        return UserMapper.mapToUserDto(updatedUser);
     }
 
     @Override
     public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new ResourceNotFoundException("User", "id", userId)
+        );
         userRepository.deleteById(userId);
     }
 }
